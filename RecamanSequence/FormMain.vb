@@ -8,10 +8,6 @@ Public Class FormMain
     Private refreshthread As Thread
 
     Private dst As Integer
-    Private d As Integer
-    Private x As Integer
-    Private y As Integer
-    Private f As Boolean = True
 
     Private Sub FormMain_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         Me.SetStyle(ControlStyles.AllPaintingInWmPaint, True)
@@ -24,7 +20,6 @@ Public Class FormMain
         g.PixelOffsetMode = Drawing2D.PixelOffsetMode.HighQuality
         g.InterpolationMode = Drawing2D.InterpolationMode.NearestNeighbor
         g.Clear(Color.Black)
-        y = bmp.Height / 2
         dst = 8
 
         Using p As New Pen(Color.FromArgb(128, Color.DimGray))
@@ -36,21 +31,19 @@ Public Class FormMain
         genSequencethread = New Thread(Sub()
                                            Thread.Sleep(1000)
 
-                                           Dim n As Integer = 0
                                            Dim v As Integer = 1
                                            Dim t As Integer
                                            Dim lt As Integer = 0
-                                           Dim values As New List(Of Integer) From {n}
+                                           Dim d As Integer
+                                           Dim y As Integer = Me.DisplayRectangle.Height / 2
+                                           Dim f As Boolean = True
+                                           Dim values As New List(Of Integer) From {lt}
 
                                            Do
-                                               t = n - v
-                                               If t <= 0 OrElse values.Contains(t) Then
-                                                   t = n + v
-                                                   n = t
-                                               End If
+                                               t = lt - v
+                                               If t <= 0 OrElse values.Contains(t) Then t = lt + v
 
                                                values.Add(t)
-                                               n = t
                                                v += 1
 
                                                d = dst * Math.Abs(t - lt)
