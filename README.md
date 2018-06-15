@@ -1,5 +1,5 @@
 # RecamanSequence
-Quick and dirty Recamán's sequence visualizer
+Simple Recamán's sequence visualizer
 
 ![Recamá's Sequence](https://xfx.net/stackoverflow/RecamanSequence/RecamanSequence.png)
 
