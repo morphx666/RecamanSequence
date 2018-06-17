@@ -5,7 +5,7 @@ Public Class FormMain
     Private g As Graphics
 
     Private genSequencethread As Thread
-    Private refreshthread As Thread
+    Private refreshThread As Thread
 
     Private dst As Integer
 
@@ -49,9 +49,9 @@ Public Class FormMain
                                                d = dst * Math.Abs(t - lt)
                                                If Math.Sign(t - lt) = -1 Then lt = t
                                                If f Then
-                                                   g.DrawArc(Pens.White, dst * lt, y - d \ 2, d, d, 180, 180)
-                                               Else
                                                    g.DrawArc(Pens.White, dst * lt, y - d \ 2, d, d, -180, -180)
+                                               Else
+                                                   g.DrawArc(Pens.White, dst * lt, y - d \ 2, d, d, 180, 180)
                                                End If
                                                f = Not f
                                                lt = t
@@ -64,13 +64,13 @@ Public Class FormMain
                                 }
         genSequencethread.Start()
 
-        refreshthread = New Thread(Sub()
+        refreshThread = New Thread(Sub()
                                        Do
                                            Thread.Sleep(30)
                                            Me.Invalidate()
                                        Loop
                                    End Sub) With {.IsBackground = True}
-        refreshthread.Start()
+        refreshThread.Start()
     End Sub
 
     Private Sub FormMain_Paint(sender As Object, e As PaintEventArgs) Handles Me.Paint
