@@ -1,32 +1,22 @@
-﻿Imports System.Threading
+﻿Imports System.Drawing.Drawing2D
+Imports System.Threading
 
 Public Class FormMain
-    Private bmp As Bitmap
-    Private g As Graphics
-
     Private genSequencethread As Thread
     Private refreshThread As Thread
 
-    Private dst As Integer
+    Private graphColor As Pen = Pens.White
+    Private path As New GraphicsPath()
+
+    Private Const dst As Integer = 8
+
+    Private midPoint As Integer
 
     Private Sub FormMain_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         Me.SetStyle(ControlStyles.AllPaintingInWmPaint, True)
         Me.SetStyle(ControlStyles.OptimizedDoubleBuffer, True)
         Me.SetStyle(ControlStyles.ResizeRedraw, False)
         Me.SetStyle(ControlStyles.UserPaint, True)
-
-        bmp = New Bitmap(Me.DisplayRectangle.Width, Me.DisplayRectangle.Height)
-        g = Graphics.FromImage(bmp)
-        g.PixelOffsetMode = Drawing2D.PixelOffsetMode.HighQuality
-        g.InterpolationMode = Drawing2D.InterpolationMode.NearestNeighbor
-        g.Clear(Color.Black)
-        dst = 8
-
-        Using p As New Pen(Color.FromArgb(128, Color.DimGray))
-            For xd As Integer = 0 To bmp.Width - 1 Step dst
-                g.DrawLine(p, xd, 0, xd, bmp.Height)
-            Next
-        End Using
 
         genSequencethread = New Thread(Sub()
                                            Thread.Sleep(1000)
@@ -35,9 +25,9 @@ Public Class FormMain
                                            Dim t As Integer
                                            Dim lt As Integer = 0
                                            Dim d As Integer
-                                           Dim y As Integer = Me.DisplayRectangle.Height / 2
                                            Dim f As Boolean = True
                                            Dim values As New List(Of Integer) From {lt}
+                                           midPoint = Me.DisplayRectangle.Height / 2
 
                                            Do
                                                t = lt - v
@@ -48,15 +38,16 @@ Public Class FormMain
 
                                                d = dst * Math.Abs(t - lt)
                                                If Math.Sign(t - lt) = -1 Then lt = t
-                                               If f Then
-                                                   g.DrawArc(Pens.White, dst * lt, y - d \ 2, d, d, -180, -180)
-                                               Else
-                                                   g.DrawArc(Pens.White, dst * lt, y - d \ 2, d, d, 180, 180)
-                                               End If
+                                               SyncLock path
+                                                   path.StartFigure()
+                                                   If f Then
+                                                       path.AddArc(dst * lt, midPoint - d \ 2, d, d, -180, -180)
+                                                   Else
+                                                       path.AddArc(dst * lt, midPoint - d \ 2, d, d, 180, 180)
+                                                   End If
+                                               End SyncLock
                                                f = Not f
                                                lt = t
-
-                                               If values.Count > 1000000 Then Exit Do
 
                                                Thread.Sleep(25) ' Add some animation...
                                            Loop
@@ -74,10 +65,30 @@ Public Class FormMain
     End Sub
 
     Private Sub FormMain_Paint(sender As Object, e As PaintEventArgs) Handles Me.Paint
-        For x As Integer = 0 To Me.DisplayRectangle.Width - 1 Step dst
-            e.Graphics.DrawLine(Pens.Gray, x, 0, x, Me.DisplayRectangle.Height)
-        Next
+        Dim g As Graphics = e.Graphics
 
-        e.Graphics.DrawImageUnscaled(bmp, 0, 0)
+        g.Clear(Color.Black)
+        SyncLock path
+            Dim r As RectangleF = path.GetBounds()
+            If r.Width > 0 AndAlso r.Height > 0 Then
+                ' Math.Min adjust the graph so that its width fits in the window
+                ' Math.Max adjust the graph so that its height fits in the window
+                Dim a As Double = Math.Max(Me.DisplayRectangle.Width / r.Width, Me.DisplayRectangle.Height / r.Height)
+
+                g.ScaleTransform(a, a)
+                g.TranslateTransform(0, 0.5 * Me.DisplayRectangle.Height / a - midPoint)
+
+                If a >= 0.8 AndAlso dst > 1 Then
+                    r = g.ClipBounds
+                    Using p As New Pen(Color.FromArgb(Math.Min(a / 6, 1) * 255, Color.Gray))
+                        For x As Integer = r.Left To r.Right - 1 Step dst
+                            g.DrawLine(p, x, r.Top, x, r.Bottom)
+                        Next
+                    End Using
+                End If
+
+                g.DrawPath(graphColor, path)
+            End If
+        End SyncLock
     End Sub
 End Class
